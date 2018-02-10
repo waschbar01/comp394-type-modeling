@@ -23,7 +23,6 @@ class Expression(object):
         """
         raise NotImplementedError(type(self).__name__ + " must implement check_types()")
 
-
 class Variable(Expression):
     """ An expression that reads the value of a variable, e.g. `x` in the expression `x + 5`.
     """
@@ -31,6 +30,11 @@ class Variable(Expression):
         self.name = name                    #: The name of the variable
         self.declared_type = declared_type  #: The declared type of the variable (Type)
 
+    def static_type(self):
+        return self.declared_type
+
+    def check_types(self):
+        pass
 
 class Literal(Expression):
     """ A literal value entered in the code, e.g. `5` in the expression `x + 5`.
@@ -39,11 +43,18 @@ class Literal(Expression):
         self.value = value  #: The literal value, as a string
         self.type = type    #: The type of the literal (Type)
 
+    def static_type(self):
+        return self.type
+
+    def check_types(self):
+        pass
 
 class NullLiteral(Literal):
     def __init__(self):
         super().__init__("null", Type.null)
 
+    def static_type(self):
+        return Type.null
 
 class MethodCall(Expression):
     """
@@ -55,6 +66,24 @@ class MethodCall(Expression):
         self.method_name = method_name  #: The name of the method to call (String)
         self.args = args                #: The method arguments (list of Expressions)
 
+    def static_type(self):
+        return self.receiver.static_type().method_named(self.method_name).return_type
+
+    def check_types(self):
+        for arg in self.args:
+            arg.check_types()
+
+        if not self.receiver.declared_type.is_subtype_of(Type.object):
+            raise JavaTypeError(
+                "Type {0} does not have methods".format(self.receiver.declared_type.name)
+            )
+
+        if len(self.args) != len(self.args):
+            raise TypeError(
+                "Wrong number of arguments for {0}: expected {1}, got {2}".format(
+                    self.instantiated_type.name,
+                    len(expected_arg_types),
+                    len(self.args)))
 
 class ConstructorCall(Expression):
     """
@@ -64,6 +93,8 @@ class ConstructorCall(Expression):
         self.instantiated_type = instantiated_type  #: The type to instantiate (Type)
         self.args = args                            #: Constructor arguments (list of Expressions)
 
+    def static_type(self):
+        return self.instantiated_type
 
 class JavaTypeError(Exception):
     """ Indicates a compile-time type error in an expression.
