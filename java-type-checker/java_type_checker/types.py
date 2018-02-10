@@ -17,7 +17,7 @@ class Type(object):
         for supertype in self.direct_supertypes:
             if supertype.is_subtype_of(other):
                 return True
-        return False
+        return False  # DONE: implement
 
     def is_supertype_of(self, other):
         """ Convenience counterpart to is_subtype_of().
@@ -76,9 +76,6 @@ class NullType(Type):
     """
     def __init__(self):
         super().__init__("null")
-
-    def method_named(self, name):
-        raise NoSuchMethod("Cannot invoke method {0}() on null".format(name))
 
 
 class NoSuchMethod(Exception):

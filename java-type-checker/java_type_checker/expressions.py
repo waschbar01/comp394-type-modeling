@@ -73,34 +73,17 @@ class MethodCall(Expression):
         for arg in self.args:
             arg.check_types()
 
-        objectTypeName = self.receiver.static_type().name
-
         if not self.receiver.declared_type.is_subtype_of(Type.object):
             raise JavaTypeError(
-                "Type {0} does not have methods".format(
-                    self.receiver.declared_type.name)
+                "Type {0} does not have methods".format(self.receiver.declared_type.name)
             )
 
-# test_flags_too_few/many_arguments
-        expected_arg_types = self.receiver.static_type().method_named(self.method_name).argument_types
-
-        if len(expected_arg_types) == len(self.args):
-            pass
-        else:
+        if len(self.args) != len(self.args):
             raise TypeError(
                 "Wrong number of arguments for {0}: expected {1}, got {2}".format(
-                    objectTypeName + "." + self.method_name + "()",
+                    self.instantiated_type.name,
                     len(expected_arg_types),
                     len(self.args)))
-
-#
-        for i in range(len(self.args)):
-            if not self.args[i].static_type().is_subtype_of(expected_arg_types[i]):
-                raise JavaTypeError("{0}.{1}() expects arguments of type {2}, but got {3}".format(
-                        objectTypeName,
-                        self.method_name,
-                        names(expected_arg_types),
-                        names([arg.static_type() for arg in self.args])))
 
 class ConstructorCall(Expression):
     """
@@ -112,35 +95,6 @@ class ConstructorCall(Expression):
 
     def static_type(self):
         return self.instantiated_type
-
-    def check_types(self):
-        if self.instantiated_type.is_subtype_of(Type.object):
-            pass
-        else:
-            raise JavaTypeError(
-                "Type {0} is not instantiable".format(self.instantiated_type.name)
-            )
-
-        if self.instantiated_type == Type.null:
-            raise JavaTypeError("Type null is not instantiable")
-
-        expected_arg_types = self.instantiated_type.constructor.argument_types
-        if len(expected_arg_types) == len(self.args):
-            pass
-        else:
-            raise JavaTypeError(
-                "Wrong number of arguments for {0} constructor: expected {1}, got {2}".format(
-                    self.instantiated_type.name,
-                    len(expected_arg_types),
-                    len(self.args))
-            )
-
-        for i in range(len(self.args)):
-            if not self.args[i].static_type().is_subtype_of(expected_arg_types[i]):
-                raise JavaTypeError("{0} constructor expects arguments of type {1}, but got {2}".format(
-                    self.instantiated_type.name,
-                    names(expected_arg_types),
-                    names([arg.static_type() for arg in self.args])))
 
 class JavaTypeError(Exception):
     """ Indicates a compile-time type error in an expression.
